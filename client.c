@@ -4,12 +4,50 @@
 #define SERVER_PORT "8080"
 #define BOARD_SIZE 20
 
+// Function to read and display messages from the server
+void process_server_messages(int clientfd) {
+    rio_t rio;
+    char buf[MAXLINE];
+    int game_over = 0;
+    
+    Rio_readinitb(&rio, clientfd);
+    
+    while (!game_over) {
+        // Read a line from the server
+        ssize_t n = Rio_readlineb(&rio, buf, MAXLINE);
+        if (n <= 0) {
+            printf("Server disconnected\n");
+            break;
+        }
+        
+        // Print the message to the console
+        printf("%s", buf);
+        
+        // Check if it's the player's turn to make a move
+        if (strstr(buf, "Your turn") != NULL) {
+            char input[MAXLINE];
+            printf("Enter your move (row,col): ");
+            if (fgets(input, MAXLINE, stdin) == NULL) {
+                break;
+            }
+            
+            // Send the move to the server
+            Rio_writen(clientfd, input, strlen(input));
+        }
+        
+        // Check if the game has ended
+        if (strstr(buf, "wins") != NULL || strstr(buf, "draw") != NULL) {
+            printf("Game over! Press Enter to exit...\n");
+            fgets(buf, MAXLINE, stdin);
+            game_over = 1;
+        }
+    }
+}
+
 int main(int argc, char **argv) {
     int clientfd;
     char *host, *port;
-    char buf[MAXLINE];
-    rio_t rio;
-
+    
     // Check command line args
     if (argc != 3) {
         host = SERVER_IP;  // default: localhost
@@ -18,28 +56,15 @@ int main(int argc, char **argv) {
         host = argv[1];
         port = argv[2];
     }
-
+    
     // Connect to the server
     clientfd = Open_clientfd(host, port);
-    Rio_readinitb(&rio, clientfd);
     printf("Connected to server at %s:%s\n", host, port);
-
-    // Read welcome message from server
-    Rio_readlineb(&rio, buf, MAXLINE);
-    printf("Server says: %s", buf);
-
-    // In a real game, you would:
-    // 1. Receive game state (board, player symbol)
-    // 2. Update display and get user input
-    // 3. Send moves to server
-    // 4. Receive updates and display them
-
-    // Simple test to show connection works
-    printf("Press Enter to exit...\n");
-    if (fgets(buf, MAXLINE, stdin) == NULL) {
-        printf("Error reading input or EOF reached\n");
-    }
     
+    // Process server messages until game ends
+    process_server_messages(clientfd);
+    
+    // Close the connection
     Close(clientfd);
     return 0;
 }

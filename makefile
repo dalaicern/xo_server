@@ -6,8 +6,11 @@ all: server client
 csapp.o: csapp.c
 	gcc $(CFLAGS) -c csapp.c -o csapp.o
 
-server: server.c csapp.o
-	gcc $(CFLAGS) server.c csapp.o -o server $(LDFLAGS)
+game.o: game.c
+	gcc $(CFLAGS) -c game.c -o game.o
+
+server: server.c csapp.o game.o
+	gcc $(CFLAGS) server.c csapp.o game.o -o server $(LDFLAGS)
 
 client: client.c csapp.o
 	gcc $(CFLAGS) client.c csapp.o -o client $(LDFLAGS)

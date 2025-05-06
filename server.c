@@ -1,47 +1,47 @@
-#include "csapp.h"
-
-#define PORT "8080"
-#define SIZE 20
-
-int check_bound(int r, int c){
-    return (r >= SIZE || c >= SIZE || r < 0 || c < 0);
-}
-
-int check_winner(int** board, int r, int c){
-    // check column
-    int counter = 0, i = 0;
-    
-    
-
-    // check row
-    // check main diagonali
-    // check diagonali 
-}
+#include "server.h"
 
 int main(int argc, char **argv) {
-    int listenfd, connfd;
+    int listenfd, connfd[2];
     socklen_t clientlen;
     struct sockaddr_storage clientaddr;
     char client_hostname[MAXLINE], client_port[MAXLINE];
     
     listenfd = Open_listenfd(PORT);
     printf("Server listening on port %s...\n", PORT);
-
-    int board[SIZE][SIZE] = {0};
     
     while (1) {
+        // Ehnii hun
         clientlen = sizeof(struct sockaddr_storage);
-        connfd = Accept(listenfd, (SA *)&clientaddr, &clientlen);
+        connfd[0] = Accept(listenfd, (SA *)&clientaddr, &clientlen);
         
         Getnameinfo((SA *)&clientaddr, clientlen,
                     client_hostname, MAXLINE, client_port, MAXLINE, 0);
-        printf("Connected to client (%s:%s)\n", client_hostname, client_port);
+        printf("Player 1 connected (%s:%s)\n", client_hostname, client_port);
         
         char buffer[MAXLINE];
-        sprintf(buffer, "Welcome to XO Game Server!\n");
-        Rio_writen(connfd, buffer, strlen(buffer));
+        sprintf(buffer, "Welcome to XO Game Server! You are Player 1 (X). Waiting for Player 2...\n");
+        Rio_writen(connfd[0], buffer, strlen(buffer));
         
-        Close(connfd);
+        // 2dah hun
+        clientlen = sizeof(struct sockaddr_storage);
+        connfd[1] = Accept(listenfd, (SA *)&clientaddr, &clientlen);
+        
+        Getnameinfo((SA *)&clientaddr, clientlen,
+                    client_hostname, MAXLINE, client_port, MAXLINE, 0);
+        printf("Player 2 connected (%s:%s)\n", client_hostname, client_port);
+        
+        sprintf(buffer, "Welcome to XO Game Server! You are Player 2 (O). Game is starting...\n");
+        Rio_writen(connfd[1], buffer, strlen(buffer));
+        
+        sprintf(buffer, "Player 2 has connected. Game is starting. Your turn!\n");
+        Rio_writen(connfd[0], buffer, strlen(buffer));
+        
+        handle_game(connfd[0], connfd[1]);
+
+        printf("Game ends!\n");
+
+        Close(connfd[0]);
+        Close(connfd[1]);
     }
     
     return 0;
