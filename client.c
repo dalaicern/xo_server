@@ -16,9 +16,10 @@ void process_server_messages(int clientfd) {
         // Read a line from the server
         ssize_t n = Rio_readlineb(&rio, buf, MAXLINE);
         if (n <= 0) {
-            printf("Server disconnected\n");
+            printf("Server disconnected!\n");
             break;
         }
+        
         
         // Print the message to the console
         printf("%s", buf);
