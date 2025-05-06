@@ -33,7 +33,7 @@ int main(int argc, char **argv) {
         sprintf(buffer, "Welcome to XO Game Server! You are Player 2 (O). Game is starting...\n");
         Rio_writen(connfd[1], buffer, strlen(buffer));
         
-        sprintf(buffer, "Player 2 has connected. Game is starting. Your turn!\n");
+        sprintf(buffer, "Player 2 has connected. Game is starting...\n");
         Rio_writen(connfd[0], buffer, strlen(buffer));
         
         handle_game(connfd[0], connfd[1]);

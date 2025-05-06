@@ -5,25 +5,25 @@ int check_winner(int board[SIZE][SIZE], int row, int col) {
     int player = board[row][col];
     if (player == 0) return 0;
     
-    // Check column
+    // Baganiin daguu
     int count = 1;
     for (int i = col - 1; i >= 0 && board[row][i] == player && count < 5; i--) count++;
     for (int i = col + 1; i < SIZE && board[row][i] == player && count < 5; i++) count++;
     if (count >= 5) return player;
     
-    // Check row
+    // Moriin daguu
     count = 1;
     for (int i = row - 1; i >= 0 && board[i][col] == player && count < 5; i--) count++;
     for (int i = row + 1; i < SIZE && board[i][col] == player && count < 5; i++) count++;
     if (count >= 5) return player;
     
-    // Check main diagonal
+    // gol diagonali
     count = 1;
     for (int i = 1; row - i >= 0 && col - i >= 0 && board[row-i][col-i] == player && count < 5; i++) count++;
     for (int i = 1; row + i < SIZE && col + i < SIZE && board[row+i][col+i] == player && count < 5; i++) count++;
     if (count >= 5) return player;
     
-    // Check anti-diagonal 
+    // esreg diagonali
     count = 1;
     for (int i = 1; row - i >= 0 && col + i < SIZE && board[row-i][col+i] == player && count < 5; i++) count++;
     for (int i = 1; row + i < SIZE && col - i >= 0 && board[row+i][col-i] == player && count < 5; i++) count++;
@@ -43,16 +43,21 @@ void handle_game(int player1_fd, int player2_fd) {
     rio_t rio;
     
     while (!game_over) {
+        printf("current player: %d\n", current_player);
         int active_fd = (current_player == 1) ? player1_fd : player2_fd;
         int waiting_fd = (current_player == 1) ? player2_fd : player1_fd;
         
         send_board(player1_fd, board);
         send_board(player2_fd, board);
         
-        sprintf(buffer, "Your turn (Player %d). Enter row,col: ", current_player);
+        sprintf(buffer, "TURN:%d, active fd: %d\n", current_player, active_fd);
+        Rio_writen(player1_fd, buffer, strlen(buffer));
+        Rio_writen(player2_fd, buffer, strlen(buffer));
+        
+        sprintf(buffer, "Your turn (Player %d).\n", current_player);
         Rio_writen(active_fd, buffer, strlen(buffer));
         
-        sprintf(buffer, "Waiting for Player %d to make a move...\n", current_player);
+        sprintf(buffer, "Huleej baina Player %d iig\n", current_player);
         Rio_writen(waiting_fd, buffer, strlen(buffer));
         
         Rio_readinitb(&rio, active_fd);
@@ -61,14 +66,17 @@ void handle_game(int player1_fd, int player2_fd) {
             break;
         }
         
+        printf("player %d: %s", current_player, buffer);
+        
+        
         if (sscanf(buffer, "%d,%d", &row, &col) != 2) {
-            sprintf(buffer, "Invalid input. Use format: row,col\n");
+            sprintf(buffer, "Buruu ugugdul. Use format: row,col\n");
             Rio_writen(active_fd, buffer, strlen(buffer));
             continue;
         }
         
         if (row < 0 || row >= SIZE || col < 0 || col >= SIZE || board[row][col] != 0) {
-            sprintf(buffer, "Invalid move. Try again.\n");
+            sprintf(buffer, "Bolomjgui uildel. Dahin oroldoj uzeerei\n");
             Rio_writen(active_fd, buffer, strlen(buffer));
             continue;
         }
@@ -109,7 +117,7 @@ void handle_game(int player1_fd, int player2_fd) {
 
 void send_board(int fd, int board[SIZE][SIZE]) {
     char buffer[MAXLINE];
-    char line[SIZE*3 + 2];
+    char line[SIZE*4 + 2];
     
     sprintf(buffer, "\nCurrent Board:\n");
     
